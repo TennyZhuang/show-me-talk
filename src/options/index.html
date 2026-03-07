@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>show-me-talk settings</title>
+    <link rel="stylesheet" href="./options.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <header>
+        <p class="eyebrow">show-me-talk</p>
+        <h1>Review the talk, collapse the code.</h1>
+        <p>
+          The defaults keep documentation, instructions, and <code>llms.txt</code> visible while collapsing code files on GitHub PRs.
+        </p>
+      </header>
+
+      <section class="panel">
+        <label class="toggle-row">
+          <span>Enable auto-collapse</span>
+          <input id="enabled" type="checkbox" />
+        </label>
+      </section>
+
+      <section class="panel">
+        <h2>Custom keep-open patterns</h2>
+        <p>One glob pattern per line. Examples: <code>specs/**</code>, <code>**/*.design.md</code>.</p>
+        <textarea id="patterns" rows="10" spellcheck="false"></textarea>
+        <div class="actions">
+          <button id="save" class="primary">Save settings</button>
+          <button id="reset" class="secondary">Reset to defaults</button>
+          <span id="status" aria-live="polite"></span>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Built-in keep-open rules</h2>
+        <pre id="defaults"></pre>
+      </section>
+    </main>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
