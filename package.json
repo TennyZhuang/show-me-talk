@@ -13,7 +13,8 @@
     "test:live": "npm run build && playwright test",
     "test": "npm run test:unit && npm run test:live",
     "browsers:install": "playwright install chromium",
-    "package:extension": "npm run build && node scripts/create-release.mjs"
+    "package:extension": "npm run build && node scripts/create-release.mjs",
+    "assets:store": "npm run build && node scripts/generate-store-assets.mjs"
   },
   "keywords": [
     "chrome-extension",

@@ -139,6 +139,17 @@ By default, `show-me-talk` assumes these are worth opening first:
 
 Everything else can earn its expansion later.
 
+
+## Chrome Web Store assets
+
+Generate ready-to-upload store assets locally:
+
+```bash
+npm run assets:store
+```
+
+This creates screenshots and promo images under `store-assets/` plus ready-to-paste listing copy in `docs-store-listing.md` and a privacy policy in `PRIVACY.md`.
+
 ## License
 
 MIT
