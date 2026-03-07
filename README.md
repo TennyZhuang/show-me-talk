@@ -6,6 +6,8 @@
 
 This is a completely vibe coded project.
 
+![show-me-talk collapsing code files on a GitHub PR while keeping docs open](docs/images/readme-hero.png)
+
 ## Why
 
 The usual slogan is _"Talk is cheap, show me the code."_
