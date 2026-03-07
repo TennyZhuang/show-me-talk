@@ -8,7 +8,7 @@ interface ScanStats {
   totalFiles: number;
   talkFiles: number;
   codeFiles: number;
-  collapsedFiles: number;
+  collapsedCodeFiles: number;
 }
 
 function isPullRequestPage(url: URL): boolean {
@@ -186,7 +186,7 @@ export class GitHubPullRequestController {
       totalFiles: files.length,
       talkFiles: 0,
       codeFiles: 0,
-      collapsedFiles: 0,
+      collapsedCodeFiles: 0,
     };
 
     for (const file of files) {
@@ -210,10 +210,17 @@ export class GitHubPullRequestController {
       }
 
       const toggleButton = file.querySelector<HTMLButtonElement>('.file-header .js-details-target');
-      if (toggleButton && toggleButton.getAttribute('aria-expanded') === 'true') {
+      if (!toggleButton) {
+        continue;
+      }
+
+      if (toggleButton.getAttribute('aria-expanded') === 'true') {
         this.programmaticToggleButtons.add(toggleButton);
         toggleButton.click();
-        stats.collapsedFiles += 1;
+      }
+
+      if (toggleButton.getAttribute('aria-expanded') === 'false') {
+        stats.collapsedCodeFiles += 1;
       }
     }
 
@@ -284,7 +291,7 @@ export class GitHubPullRequestController {
 
     const summary = toolbar.querySelector<HTMLElement>('.show-me-talk-toolbar__summary');
     if (summary) {
-      summary.textContent = `${stats.collapsedFiles} collapsed · ${stats.talkFiles} talk files kept open · ${stats.codeFiles} code files detected`;
+      summary.textContent = `${stats.collapsedCodeFiles}/${stats.codeFiles} code files collapsed · ${stats.talkFiles} talk files kept open`;
     }
   }
 
