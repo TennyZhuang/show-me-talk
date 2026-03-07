@@ -22,6 +22,8 @@ export class GitHubPullRequestController {
 
   private followUpScanTimers: number[] = [];
 
+  private bootstrapScanIntervalId: number | null = null;
+
   private settings: ShowMeTalkSettings = DEFAULT_SETTINGS;
 
   private currentUrl = window.location.href;
@@ -37,6 +39,13 @@ export class GitHubPullRequestController {
 
   private readonly boundHandleScroll = (): void => {
     this.scheduleScan();
+  };
+
+  private readonly boundHandleVisibilityChange = (): void => {
+    if (document.visibilityState === 'visible') {
+      this.scheduleScan();
+      this.startBootstrapScanLoop();
+    }
   };
 
   private readonly boundHandleClicks = (event: Event): void => {
@@ -77,6 +86,7 @@ export class GitHubPullRequestController {
     this.bind();
     this.scheduleScan();
     this.queueFollowUpScans();
+    this.startBootstrapScanLoop();
   }
 
   private bind(): void {
@@ -93,6 +103,7 @@ export class GitHubPullRequestController {
     document.addEventListener('turbo:render', this.boundHandleMutations);
     window.addEventListener('popstate', this.boundHandleMutations);
     window.addEventListener('scroll', this.boundHandleScroll, { passive: true });
+    document.addEventListener('visibilitychange', this.boundHandleVisibilityChange);
     chrome.storage.onChanged.addListener(this.boundHandleStorageChanges);
   }
 
@@ -109,6 +120,7 @@ export class GitHubPullRequestController {
     this.currentUrl = window.location.href;
     this.manualOverrides.clear();
     this.queueFollowUpScans();
+    this.startBootstrapScanLoop();
   }
 
   private scheduleScan(force = false): void {
@@ -136,6 +148,25 @@ export class GitHubPullRequestController {
         this.scheduleScan();
       }, delay),
     );
+  }
+
+  private startBootstrapScanLoop(): void {
+    if (this.bootstrapScanIntervalId !== null) {
+      window.clearInterval(this.bootstrapScanIntervalId);
+    }
+
+    const startedAt = Date.now();
+    this.bootstrapScanIntervalId = window.setInterval(() => {
+      if (Date.now() - startedAt > 15_000) {
+        if (this.bootstrapScanIntervalId !== null) {
+          window.clearInterval(this.bootstrapScanIntervalId);
+          this.bootstrapScanIntervalId = null;
+        }
+        return;
+      }
+
+      this.scheduleScan();
+    }, 750);
   }
 
   private scanPage(): void {
