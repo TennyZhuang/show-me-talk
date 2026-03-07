@@ -43,3 +43,17 @@ test('keeps docs open and collapses code on mixed PRs', async ({ context }) => {
   await expect(codeHeader.locator('.js-details-target')).toHaveAttribute('aria-expanded', 'false');
   await page.close();
 });
+
+
+test('keeps later lazy-loaded code files collapsed after scrolling', async ({ context }) => {
+  const page = await context.newPage();
+  await page.goto('https://github.com/microsoft/playwright/pull/39546/files', {
+    waitUntil: 'domcontentloaded',
+  });
+
+  const lateCodeHeader = page.locator('.file-header[data-path="tests/library/browsertype-launch-server.spec.ts"]');
+  await lateCodeHeader.scrollIntoViewIfNeeded();
+  await expect(lateCodeHeader).toBeVisible();
+  await expect(lateCodeHeader.locator('.js-details-target')).toHaveAttribute('aria-expanded', 'false');
+  await page.close();
+});

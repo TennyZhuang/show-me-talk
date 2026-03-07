@@ -20,14 +20,22 @@ export class GitHubPullRequestController {
 
   private scanTimer: number | null = null;
 
+  private followUpScanTimers: number[] = [];
+
   private settings: ShowMeTalkSettings = DEFAULT_SETTINGS;
 
   private currentUrl = window.location.href;
 
   private manualOverrides = new Set<string>();
 
+  private programmaticToggleButtons = new WeakSet<HTMLButtonElement>();
+
   private readonly boundHandleMutations = (): void => {
     this.handleNavigation();
+    this.scheduleScan();
+  };
+
+  private readonly boundHandleScroll = (): void => {
     this.scheduleScan();
   };
 
@@ -48,6 +56,11 @@ export class GitHubPullRequestController {
       return;
     }
 
+    if (this.programmaticToggleButtons.has(toggleButton)) {
+      this.programmaticToggleButtons.delete(toggleButton);
+      return;
+    }
+
     const fileHeader = toggleButton.closest<HTMLElement>('.file-header[data-path]');
     const fileKey = this.getFileKey(fileHeader);
     if (fileKey) {
@@ -63,16 +76,23 @@ export class GitHubPullRequestController {
     this.settings = await loadSettings();
     this.bind();
     this.scheduleScan();
+    this.queueFollowUpScans();
   }
 
   private bind(): void {
     this.observer = new MutationObserver(this.boundHandleMutations);
-    this.observer.observe(document.documentElement, { childList: true, subtree: true });
+    this.observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['aria-expanded', 'data-path', 'class', 'open'],
+    });
 
     document.addEventListener('click', this.boundHandleClicks, true);
     document.addEventListener('pjax:end', this.boundHandleMutations);
     document.addEventListener('turbo:render', this.boundHandleMutations);
     window.addEventListener('popstate', this.boundHandleMutations);
+    window.addEventListener('scroll', this.boundHandleScroll, { passive: true });
     chrome.storage.onChanged.addListener(this.boundHandleStorageChanges);
   }
 
@@ -88,6 +108,7 @@ export class GitHubPullRequestController {
 
     this.currentUrl = window.location.href;
     this.manualOverrides.clear();
+    this.queueFollowUpScans();
   }
 
   private scheduleScan(force = false): void {
@@ -103,6 +124,18 @@ export class GitHubPullRequestController {
       this.scanTimer = null;
       this.scanPage();
     }, 120);
+  }
+
+  private queueFollowUpScans(): void {
+    for (const timer of this.followUpScanTimers) {
+      window.clearTimeout(timer);
+    }
+
+    this.followUpScanTimers = [250, 1000, 2500].map((delay) =>
+      window.setTimeout(() => {
+        this.scheduleScan();
+      }, delay),
+    );
   }
 
   private scanPage(): void {
@@ -147,6 +180,7 @@ export class GitHubPullRequestController {
 
       const toggleButton = file.querySelector<HTMLButtonElement>('.file-header .js-details-target');
       if (toggleButton && toggleButton.getAttribute('aria-expanded') === 'true') {
+        this.programmaticToggleButtons.add(toggleButton);
         toggleButton.click();
         stats.collapsedFiles += 1;
       }
@@ -180,6 +214,7 @@ export class GitHubPullRequestController {
 
         const toggleButton = file.querySelector<HTMLButtonElement>('.file-header .js-details-target');
         if (toggleButton?.getAttribute('aria-expanded') === 'false') {
+          this.programmaticToggleButtons.add(toggleButton);
           toggleButton.click();
         }
       }
